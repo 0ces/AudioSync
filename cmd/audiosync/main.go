@@ -14,7 +14,21 @@ import (
 	"github.com/eplata/audiosync/internal/role"
 )
 
+// Build metadata, injected at link time via -ldflags "-X main.version=...".
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
+	for _, a := range os.Args[1:] {
+		if a == "--version" || a == "-version" || a == "version" {
+			fmt.Printf("audiosync %s (commit %s, built %s)\n", version, commit, date)
+			return
+		}
+	}
+
 	cfg, err := config.Parse(os.Args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

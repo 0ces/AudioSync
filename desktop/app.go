@@ -82,3 +82,6 @@ func (a *App) Stop() { a.eng.Stop() }
 
 // Running reports whether the pipeline is active.
 func (a *App) Running() bool { return a.eng.Running() }
+
+// Version returns the app's build version (injected at link time).
+func (a *App) Version() string { return version }

@@ -12,11 +12,13 @@ export function Sidebar({
   setView,
   running,
   onToggle,
+  version,
 }: {
   view: View;
   setView: (v: View) => void;
   running: boolean;
   onToggle: () => void;
+  version: string;
 }) {
   return (
     <aside className="sidebar">
@@ -47,7 +49,7 @@ export function Sidebar({
       </nav>
 
       <div className="spacer" />
-      <div className="foot">v0.4 · Phase 4</div>
+      <div className="foot">{version}</div>
     </aside>
   );
 }

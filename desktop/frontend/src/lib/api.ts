@@ -11,6 +11,7 @@ import {
   SetOutputDevice,
   Start,
   Stop,
+  Version,
 } from "../../wailsjs/go/main/App";
 import { engine } from "../../wailsjs/go/models";
 
@@ -30,4 +31,5 @@ export const api = {
   SetOutputDevice,
   Start,
   Stop,
+  Version,
 };

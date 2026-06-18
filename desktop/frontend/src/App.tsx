@@ -13,11 +13,16 @@ export default function App() {
   const [view, setView] = useState<View>("mixer");
   const [addOpen, setAddOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [version, setVersion] = useState("dev");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    api.Version().then((v) => setVersion(v === "dev" ? "dev build" : `v${v}`)).catch(() => {});
+  }, []);
 
   const running = snap?.running ?? false;
   const sources = snap?.sources ?? [];
@@ -38,7 +43,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Sidebar view={view} setView={setView} running={running} onToggle={onToggle} />
+      <Sidebar view={view} setView={setView} running={running} onToggle={onToggle} version={version} />
 
       <main className="main">
         <header className="topbar">

@@ -25,3 +25,5 @@ export function SetVolume(arg1:number,arg2:number):Promise<void>;
 export function Start():Promise<string>;
 
 export function Stop():Promise<void>;
+
+export function Version():Promise<string>;

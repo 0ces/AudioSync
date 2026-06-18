@@ -49,3 +49,7 @@ export function Start() {
 export function Stop() {
   return window['go']['main']['App']['Stop']();
 }
+
+export function Version() {
+  return window['go']['main']['App']['Version']();
+}

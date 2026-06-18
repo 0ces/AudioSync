@@ -18,6 +18,9 @@ var assets embed.FS
 //go:embed build/trayicon.png
 var trayIcon []byte
 
+// version is injected at link time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
 	app := NewApp()
 
