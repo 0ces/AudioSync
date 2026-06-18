@@ -60,6 +60,9 @@ jobs:
           VER="${REF#v}"
           echo "VERSION=$VER" >> "$GITHUB_ENV"
           echo "LDFLAGS=-X main.version=$VER -X main.commit=${GITHUB_SHA::7} -X main.date=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+          # MACOS_SIGN turns on the (dormant) notarization path below only when a
+          # signing certificate secret is present. See the secrets table in README.
+          echo "MACOS_SIGN=${{ secrets.MACOS_CERTIFICATE != '' }}" >> "$GITHUB_ENV"
 
       - name: Build CLI
         shell: bash
@@ -79,6 +82,46 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: cp -R desktop/build/bin/audiosync-desktop.app "staging/AudioSync.app"
+
+      # --- macOS Developer ID signing + notarization (dormant until secrets exist) ---
+      # Required secrets (see README "Enabling macOS notarization"):
+      #   MACOS_CERTIFICATE      base64 of the Developer ID Application .p12
+      #   MACOS_CERTIFICATE_PWD  password for the .p12
+      #   DEVELOPER_ID           "Developer ID Application: Name (TEAMID)"
+      #   AC_API_KEY             base64 of the App Store Connect API key (.p8)
+      #   AC_API_KEY_ID          API key id
+      #   AC_API_ISSUER_ID       API key issuer id
+      - name: Import signing certificate (macOS)
+        if: runner.os == 'macOS' && env.MACOS_SIGN == 'true'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/build.keychain"
+          KEYCHAIN_PWD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN"
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+      - name: Sign, notarize, and staple (macOS)
+        if: runner.os == 'macOS' && env.MACOS_SIGN == 'true'
+        env:
+          DEVELOPER_ID: ${{ secrets.DEVELOPER_ID }}
+          AC_API_KEY: ${{ secrets.AC_API_KEY }}
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
+        run: |
+          codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "staging/audiosync"
+          codesign --deep --force --options runtime --timestamp --sign "$DEVELOPER_ID" "staging/AudioSync.app"
+          echo "$AC_API_KEY" | base64 --decode > "$RUNNER_TEMP/ac_api.p8"
+          ditto -c -k --keepParent "staging/AudioSync.app" "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" \
+            --key "$RUNNER_TEMP/ac_api.p8" --key-id "$AC_API_KEY_ID" --issuer "$AC_API_ISSUER_ID" --wait
+          xcrun stapler staple "staging/AudioSync.app"
 
       - name: Stage desktop bundle (Windows)
         if: runner.os == 'Windows'
@@ -121,8 +164,14 @@ jobs:
             - `*_windows_amd64.zip` — Windows
             - `*_linux_amd64.tar.gz` — Linux
 
-            macOS/Windows builds are **unsigned**: macOS users right-click the app → Open
-            to bypass Gatekeeper. See the [CHANGELOG](CHANGELOG.md) for details.
+            These builds are **unsigned**. First launch:
+            - **macOS** (no right-click → Open on macOS 15+): run
+              `xattr -dr com.apple.quarantine /path/to/AudioSync.app` then open it, **or**
+              System Settings → Privacy & Security → **Open Anyway**.
+            - **Windows**: SmartScreen → **More info → Run anyway**.
+
+            See [Installing a release](https://github.com/0ces/AudioSync#installing-a-release)
+            and the [CHANGELOG](CHANGELOG.md).
           files: |
             dist/*.zip
             dist/*.tar.gz

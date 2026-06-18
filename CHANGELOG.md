@@ -6,6 +6,18 @@ All notable changes to AudioSync are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-18
+
+### Fixed
+- Corrected the macOS first-run instructions: the right-click → Open Gatekeeper
+  bypass was removed in macOS 15, so docs/release notes now use quarantine removal
+  (`xattr -dr com.apple.quarantine`) or System Settings → Open Anyway.
+
+### Added
+- `scripts/macos-first-run.sh` to de-quarantine and open a downloaded build.
+- Dormant Developer ID signing + notarization path in the release workflow,
+  activated by adding the documented macOS signing secrets.
+
 ## [0.1.0] - 2026-06-18
 
 First tagged release. Stream system audio from N computers to one set of
@@ -30,8 +42,10 @@ headphones, over the LAN.
 ### Known limitations
 - macOS verified end-to-end; Windows/Linux capture is compile-correct but
   untested on their own hardware.
-- macOS release artifacts are unsigned (right-click → Open past Gatekeeper).
+- macOS release artifacts are unsigned; on macOS 15+ open them via
+  `xattr -dr com.apple.quarantine` or System Settings → Open Anyway.
 - Tray opens the full window rather than a compact native popover panel.
 
-[Unreleased]: https://github.com/0ces/AudioSync/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/0ces/AudioSync/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/0ces/AudioSync/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/0ces/AudioSync/releases/tag/v0.1.0

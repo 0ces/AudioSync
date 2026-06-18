@@ -139,6 +139,50 @@ senders it shows the first-run state with this machine's address to point sender
 > from the menu). Remaining polish: a compact native menu-bar *popover* panel (today the tray
 > menu opens the full window) and launch-at-login.
 
+## Installing a release
+
+Prebuilt artifacts live on the [Releases](https://github.com/0ces/AudioSync/releases) page.
+Each archive contains the `audiosync` CLI and the desktop app. The builds are **unsigned**, so
+the OS warns on first launch — that's expected; here's how to get past it.
+
+### macOS (first run)
+
+Downloading the zip flags the app with `com.apple.quarantine`, so Gatekeeper shows
+*"'AudioSync' Not Opened — Apple could not verify…"*. On macOS 15+ there is **no** right-click →
+Open bypass anymore. Use either:
+
+- **Terminal** (fastest):
+  ```sh
+  xattr -dr com.apple.quarantine /path/to/AudioSync.app
+  open /path/to/AudioSync.app
+  ```
+  Or run the bundled helper: `bash scripts/macos-first-run.sh /path/to/AudioSync.app`.
+- **System Settings:** click **Done** on the dialog → System Settings → Privacy & Security →
+  scroll to the AudioSync notice → **Open Anyway** → authenticate.
+
+You only need to do this once per download.
+
+### Windows (first run)
+
+SmartScreen shows *"Windows protected your PC"*. Click **More info → Run anyway**.
+
+### Enabling macOS notarization (maintainers)
+
+The release workflow has a notarization path that stays dormant until these GitHub **secrets**
+exist (requires an Apple Developer Program membership):
+
+| Secret | What it is |
+|---|---|
+| `MACOS_CERTIFICATE` | base64 of the Developer ID Application `.p12` |
+| `MACOS_CERTIFICATE_PWD` | password for the `.p12` |
+| `DEVELOPER_ID` | `Developer ID Application: Name (TEAMID)` |
+| `AC_API_KEY` | base64 of the App Store Connect API key (`.p8`) |
+| `AC_API_KEY_ID` | API key id |
+| `AC_API_ISSUER_ID` | API key issuer id |
+
+With them set, the macOS artifact is signed, notarized, and stapled — and the Gatekeeper
+warning disappears. Without them, the unsigned path above runs unchanged.
+
 ## Roadmap
 
 1. ✅ **Pipeline** — source → UDP → mix → playback, manual IP.
