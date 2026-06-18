@@ -1,0 +1,15 @@
+# Go build artifacts
+/audiosync
+*.test
+*.out
+
+# audio scratch
+*.wav
+
+# Wails / desktop build outputs
+desktop/build/bin/
+desktop/frontend/node_modules/
+desktop/frontend/dist/
+
+# OS / editor
+.DS_Store
