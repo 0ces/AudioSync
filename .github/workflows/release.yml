@@ -155,7 +155,6 @@ jobs:
           name: AudioSync ${{ github.event.inputs.tag || github.ref_name }}
           draft: false
           prerelease: ${{ startsWith(env.VERSION, '0.') }}
-          append_body: true
           body: |
             Stream system audio from N computers to one set of headphones.
 
